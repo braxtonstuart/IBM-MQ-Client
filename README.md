@@ -16,7 +16,7 @@ _Docker must be installed and running (https://www.docker.com)_
 ### Detailed Instructions
 _Requires Oracle/OpenJDK JDK 11 & Maven 3_
 1. Install the client SSL certificate the default Java `cacerts` keystore, via `keytool`
-    - Run the following command, replacing `<cert-absolute-filepath>` with the filepath of the clientSSL certificate : `keytool -cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias omsmq -file <cert-absolute-filepath>`
+    - Run the following command, replacing `<cert-absolute-filepath>` with the filepath of the clientSSL certificate: `keytool -cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias omsmq -file <cert-absolute-filepath>`
 2. Clone or download this repository.
 3. Open a terminal and navigate to the root directory of this project.
 4. Build & package: `mvn clean package`
