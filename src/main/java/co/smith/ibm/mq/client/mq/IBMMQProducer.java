@@ -6,15 +6,15 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.net.ssl.SSLContext;
 
-import com.ibm.mq.jms.MQQueueConnectionFactory;
-
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.core.JmsTemplate;
 
-import co.smith.ibm.mq.client.dto.OMSOrderData;
+import com.ibm.mq.jms.MQQueueConnectionFactory;
+
+import co.smith.ibm.mq.client.dto.Message;
 
 
 /**
@@ -23,11 +23,11 @@ import co.smith.ibm.mq.client.dto.OMSOrderData;
  * Author: braxtonstuart
  * Date: 3/6/20
  */
-public class OrderCreate
+public class IBMMQProducer
 {
-	private Logger LOG = LoggerFactory.getLogger(OrderCreate.class);
+	private Logger LOG = LoggerFactory.getLogger(IBMMQProducer.class);
 
-	public void sendOrderToOMS(OMSOrderData orderData)
+	public void sendMessage(Message message)
 	{
 		MQQueueConnectionFactory connectionFactory = mqQueueConnectionFactory();
 
@@ -35,7 +35,8 @@ public class OrderCreate
 		{
 			JmsTemplate jmsTemplate = new JmsTemplate(connectionFactory);
 			jmsTemplate.setDefaultDestinationName("OMS.INBOUND.SAP.SALESORDER.SYNC.Q");
-			jmsTemplate.convertAndSend(orderData);
+			jmsTemplate.convertAndSend(message);
+			LOG.info("Message sent successfully!");
 		}
 		else
 		{
@@ -50,6 +51,7 @@ public class OrderCreate
 		SSLContext sslContext = null;
 		try
 		{
+			// Trust All Certificates
 			sslContextBuilder.loadTrustMaterial(new TrustAllStrategy());
 			sslContext = sslContextBuilder.build();
 		}
@@ -57,7 +59,6 @@ public class OrderCreate
 		{
 			LOG.error("Error during setup of SSL Context!", e);
 		}
-
 
 		MQQueueConnectionFactory connectionFactory = null;
 		if(sslContext != null)
@@ -69,22 +70,20 @@ public class OrderCreate
 				connectionFactory.setChannel("SYSTEM.SSL.SVRCONN");
 				connectionFactory.setHostName("bnc-oms.dev.coc.ibmcloud.com");
 				connectionFactory.setPort(1415);
+				connectionFactory.setAppName("SAP Commerce");
 
 				// Oracle JRE CipherSuite
+				// Ensure -Dcom.ibm.mq.cfg.useIBMCipherMappings=false is passed as a JVM argument
+				// Refer To: https://www.ibm.com/support/knowledgecenter/SSFKSJ_8.0.0/com.ibm.mq.dev.doc/q113220_.htm
 				connectionFactory.setSSLCipherSuite("TLS_RSA_WITH_AES_128_CBC_SHA256");
-
-				// IBM JRE CipherSuite
-				// connectionFactory.setSSLCipherSuite("SSL_RSA_WITH_AES_128_CBC_SHA256");
 
 				connectionFactory.setTransportType(1);
 				connectionFactory.setSSLSocketFactory(sslContext.getSocketFactory());
-
 			}
 			catch (Exception e)
 			{
 				LOG.error("Error during setup of Connection Factory!", e);
 			}
-
 		}
 
 		return connectionFactory;
